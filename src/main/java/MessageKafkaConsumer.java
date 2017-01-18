@@ -20,7 +20,8 @@
 public class MessageKafkaConsumer{
     public static SparkConf sparkConf = new SparkConf()
             .setAppName("Calculation")
-            .setMaster("local[*]");
+            .setMaster("local[*]")
+            .set("spark.cassandra.connection.host", "127.0.0.1");
     public static JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
     public static String gotMessage;
@@ -40,12 +41,10 @@ public class MessageKafkaConsumer{
 
     public static void main(String[] args) throws Exception {
         new MessageKafkaConsumer();
-        //         String gotMessage = "If you see it this mean that something went wrong in MessageKafkaConsumer.java";
 
         KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(properties);
-        consumer.subscribe(Arrays.asList(topicName));
-
-        while (true) {
+       consumer.subscribe(Arrays.asList(topicName));
+       while (true) {
             ConsumerRecords<String, String> records = consumer.poll(100);
             for (ConsumerRecord<String, String> record : records) {
                 gotMessage = record.value();
@@ -57,18 +56,16 @@ public class MessageKafkaConsumer{
 
     public static void convertingJSONToSpark (String message){
         ObjectMapper mapper = new ObjectMapper();
-
         try {
             List<Map<String, Integer>> countries = mapper.readValue(message, List.class);
-
+            List<Country> ctry = new ArrayList<Country>();
             countries.forEach((countryMap) -> {
                 for (Map.Entry<String, Integer> country : countryMap.entrySet()) {
-                    List<Country> ctry = new ArrayList<Country>();
                     ctry.add(new Country(country.getKey(), country.getValue()));
-                    JavaRDD<Country> tempRDD = sc.parallelize(ctry);
-                    javaFunctions(tempRDD).writerBuilder("ks", "country", mapToRow(Country.class)).saveToCassandra();
                 }
             });
+            JavaRDD<Country> tempRDD = sc.parallelize(ctry);
+            javaFunctions(tempRDD).writerBuilder("testkeyspace", "country", mapToRow(Country.class)).saveToCassandra();
         }
         catch (Exception e){
             e.printStackTrace();
