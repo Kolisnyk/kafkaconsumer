@@ -1,9 +1,15 @@
 import java.io.Serializable;
 
 /**
- * Created by oleksii on 15.01.17.
+ * Created by Oleksii Kolisnyk on 14.01.17.
+ * Free for uncommercial use.
+ * @author Oliksii Kolisnyk
+ * @version 1.0
  */
 
+/**
+ * Create Country entity for Cassandra
+ * */
 public class Country implements Serializable{
 
     private String name;
